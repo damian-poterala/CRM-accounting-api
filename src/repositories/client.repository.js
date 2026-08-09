@@ -60,6 +60,11 @@ export async function search(filters) {
         params.push(filters.company_type);
     }
 
+    if(filters.cooperation_status) {
+        sql += ' AND cooperation_status = ?';
+        params.push(filters.cooperation_status);
+    }
+
     if(filters.nip) {
         sql += ' AND nip = ?';
         params.push(filters.nip);
@@ -68,11 +73,6 @@ export async function search(filters) {
     if(filters.owner) {
         sql += " AND CONCAT(first_name, ' ', last_name) = ?";
         params.push(filters.owner);
-    }
-
-    if(filters.is_active != undefined) {
-        sql += ' AND is_active = ?';
-        params.push(filters.is_active);
     }
 
     sql += `
