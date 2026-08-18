@@ -37,3 +37,18 @@ export async function search(req, res) {
         return res.status(500).json({ message: 'Wystąpił błąd podczas wyszukiwania danych.' });
     }
 }
+
+export async function update(req, res) {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+
+        const result = await clientService.update(id, data);
+
+        return res.status(result.status).json(result.data);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({ message: 'Wystąpił błąd podczas aktualizacji danych.' });
+    }
+}

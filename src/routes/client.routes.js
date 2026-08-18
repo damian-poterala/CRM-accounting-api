@@ -11,4 +11,6 @@ router.get('/autocomplete', clientController.autocomplete);
 
 router.post('/search', clientController.search);
 
+router.put('/:id', clientController.update);
+
 export default router;

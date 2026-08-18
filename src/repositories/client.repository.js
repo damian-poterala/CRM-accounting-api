@@ -82,3 +82,29 @@ export async function search(filters) {
     const [rows] = await pool.execute(sql, params);
     return rows; 
 }
+
+export async function findById(id) {
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM clients
+        WHERE id = ?
+        LIMIT 1     
+    `, [id]);
+
+    return rows[0] || null;
+}
+
+export async function update(id, data) {
+    const [result] = await pool.query(`
+       UPDATE clients
+       SET  cooperation_status = ?,
+            account_manager_id = ?,
+            phone = ?,
+            email = ?,
+            is_vat_payer = ?,
+            notes = ?
+       WHERE id = ? 
+    `, [data.cooperationStatus, data.accountManager, data.phone, data.email, data.isVatPayer, data.notes, id]);
+
+    return result;
+}
