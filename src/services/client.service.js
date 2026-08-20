@@ -36,3 +36,7 @@ export async function update(id, data) {
         data: result.affectedRows == 0 ? 'Nie wprowadzono żadnych zmian.' : 'Dane klienta zostały zaktualizowane.'
     };
 }
+
+export async function create(data) {
+    return await clientRepository.create(data);
+}

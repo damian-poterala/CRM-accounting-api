@@ -10,7 +10,9 @@ router.get('/'            , clientController.getClients);
 router.get('/autocomplete', clientController.autocomplete);
 
 router.post('/search', clientController.search);
+router.post('', clientController.create);
 
 router.put('/:id', clientController.update);
+
 
 export default router;

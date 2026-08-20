@@ -108,3 +108,12 @@ export async function update(id, data) {
 
     return result;
 }
+
+export async function create(data) {
+    const [result] = await pool.query(`
+        INSERT INTO clients (company_type, company_name, first_name, last_name, nip, regon, krs, pesel, email, phone, is_vat_payer, cooperation_status, account_manager_id, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [data.companyType, data.companyName, data.firstName, data.lastName, data.nip, data.regon, data.krs, data.pesel, data.email, data.phone, data.isVatPayer, 'active', data.accountManager, data.notes]);
+
+    return result;
+}

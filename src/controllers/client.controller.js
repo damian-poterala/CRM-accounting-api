@@ -52,3 +52,17 @@ export async function update(req, res) {
         return res.status(500).json({ message: 'Wystąpił błąd podczas aktualizacji danych.' });
     }
 }
+
+export async function create(req, res) {
+    try {
+        const data = req.body;
+
+        const result = await clientService.create(data);
+
+        return res.status(200).json(result.data);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({ message: 'Wystąpił błąd podczas tworzenia klienta' });
+    }
+}
