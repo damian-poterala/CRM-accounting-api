@@ -45,7 +45,7 @@ export async function update(req, res) {
 
         const result = await clientService.update(id, data);
 
-        return res.status(result.status).json(result.data);
+        return res.status(result.status).json({ status: 200, message: 'Udało się zaktualizować dane klienta' });
     } catch (error) {
         console.error(error);
 
@@ -59,7 +59,7 @@ export async function create(req, res) {
 
         const result = await clientService.create(data);
 
-        return res.status(200).json(result.data);
+        return res.status(result.status).json({ status: 200, message: 'Udało się utworzyć nowego klienta' });
     } catch (error) {
         console.error(error);
 

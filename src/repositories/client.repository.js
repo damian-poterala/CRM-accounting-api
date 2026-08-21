@@ -3,8 +3,25 @@ import pool from '../config/db.js';
 export async function getClients() {
 
     const [rows] = await pool.query(`
-        SELECT *
-        FROM clients
+        SELECT  c.id,
+                c.company_type,
+                c.company_name,
+                c.first_name,
+                c.last_name,
+                c.nip,
+                c.regon,
+                c.krs,
+                c.pesel,
+                c.email,
+                c.phone,
+                c.is_vat_payer,
+                c.cooperation_status,
+                c.account_manager_id,
+                (SELECT username FROM users AS u WHERE u.id = c.account_manager_id LIMIT 1) AS account_manager,
+                c.notes,
+                c.created_at,
+                c.updated_at
+        FROM clients AS c
         ORDER BY id DESC
     `);
 
@@ -43,8 +60,25 @@ export async function autocomplete(field, query) {
 
 export async function search(filters) {
     let sql = `
-        SELECT *
-        FROM clients
+        SELECT  c.id,
+                c.company_type,
+                c.company_name,
+                c.first_name,
+                c.last_name,
+                c.nip,
+                c.regon,
+                c.krs,
+                c.pesel,
+                c.email,
+                c.phone,
+                c.is_vat_payer,
+                c.cooperation_status,
+                c.account_manager_id,
+                (SELECT username FROM users AS u WHERE u.id = c.account_manager_id LIMIT 1) AS account_manager,
+                c.notes,
+                c.created_at,
+                c.updated_at
+        FROM clients AS c
         WHERE 1 = 1
     `;
 
@@ -94,7 +128,7 @@ export async function findById(id) {
     return rows[0] || null;
 }
 
-export async function update(id, data) {
+export async function update(id, data) {    
     const [result] = await pool.query(`
        UPDATE clients
        SET  cooperation_status = ?,
