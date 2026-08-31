@@ -13,6 +13,7 @@ router.post('/search', clientController.search);
 router.post('', clientController.create);
 
 router.put('/:id', clientController.update);
+router.put('/:id/details', clientController.updateDetails);
 
 
 export default router;
