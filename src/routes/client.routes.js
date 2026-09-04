@@ -8,6 +8,7 @@ const router = Router();
 
 router.get('/'            , clientController.getClients);
 router.get('/autocomplete', clientController.autocomplete);
+router.get('/:id/details' , clientController.getDetails );
 
 router.post('/search', clientController.search);
 router.post('', clientController.create);

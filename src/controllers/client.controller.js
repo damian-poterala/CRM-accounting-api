@@ -84,3 +84,12 @@ export async function updateDetails(req, res) {
         return res.status(500).json({ message: "Wystąpił błąd podczas zapisywania szczegółów klienta" });
     }
 }
+
+export async function getDetails(req, res, next) {
+    try {
+        const result = await clientService.getDetails(req.params.id);
+        return res.status(result.status).json(result.data);
+    } catch (error) {
+        next(error);
+    }
+}

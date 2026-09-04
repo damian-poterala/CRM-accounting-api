@@ -1,5 +1,12 @@
+import pool from '../config/db.js';
+
 import * as clientRepository from '../repositories/client.repository.js';
 import * as clientDetailsRepository from '../repositories/client-details.repository.js';
+import * as clientCommentsRepository from '../repositories/client-comment.repository.js';
+import * as clientAccountingServiceRepository from '../repositories/client-accounting-service.repository.js';
+import * as clientZusRegistrationRepository from '../repositories/client-zus-registration.repository.js';
+import * as clientZusRegistrationHistoryRepository from '../repositories/client-zus-registration-history.repository.js';
+import * as clientVatStatus from '../repositories/client-vat-status.repository.js';
 
 export async function getClients() {
     return await clientRepository.getClients();
@@ -49,20 +56,337 @@ export async function updateDetails(clientId, data) {
         return { status: 404, data: { message: 'Nie znaleziono klienta o podanym ID.' } };
     }
 
-    const details = await clientDetailsRepository.findByClientId(clientId);
+    const connection = await pool.getConnection();
 
-    let result;
+    try {
+        await connection.beginTransaction();
 
-    if(details) {
-        result = await clientDetailsRepository.update(clientId, data);
-    } else {
-        result = await clientDetailsRepository.create(clientId, data);
-    }
+        const details = await clientDetailsRepository.findByClientId(clientId, connection);
 
-    return {
-        status: 200,
-        data: {
-            message: details ? 'Szczegóły klineta zostały zaktualizowane.' : 'Szczegóły klienta zostały zapisane.'
+        if(details) {
+            await clientDetailsRepository.update(clientId, data, connection);
+        } else {
+            await clientDetailsRepository.create(clientId, data, connection);
         }
+
+        if(data.comment?.trim()) {
+            await clientCommentsRepository.create(clientId, data.comment, connection);
+        }
+
+        await clientAccountingServiceRepository.deleteByClientId(connection, clientId);
+        await clientAccountingServiceRepository.createMany(connection, clientId, data.services);
+        await clientVatStatus.deleteByClientId(connection, clientId);
+        await clientVatStatus.createMany(connection, clientId, data.vatStatuses);
+        await syncZusRegistrations(connection, clientId, data.registrations)
+
+        await connection.commit();
+
+        return {
+            status: 200,
+            data: {
+                message: details ? 'Dane klienta zostały zaktualizowane.' : 'Dane klienta zostały zapisane.'
+            }
+        }
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
     }
+}
+
+async function syncZusRegistrations(connection, clientId, registrations) {
+    const existingRegistrations =
+        await clientZusRegistrationRepository.findByClientId(
+            connection,
+            clientId
+        );
+
+    const incomingIds = new Set();
+
+    for (const registration of registrations ?? []) {
+
+        const existing = existingRegistrations.find(
+            item =>
+                item.registration_type_id === registration.registrationTypeId
+        );
+
+        if (!existing) {
+            // NOWY WPIS
+            const result = await clientZusRegistrationRepository.create(
+                connection,
+                clientId,
+                registration
+            );
+
+            await clientZusRegistrationHistoryRepository.create(
+                connection,
+                {
+                    id: result.insertId,
+                    clientId,
+                    registrationTypeId: registration.registrationTypeId,
+                    dateFrom: registration.dateFrom,
+                    dateTo: registration.dateTo,
+                    socialContribution: registration.socialContribution,
+                    healthContribution: registration.healthContribution
+                },
+                'INSERT'
+            );
+
+            continue;
+        }
+
+        incomingIds.add(existing.id);
+
+        const hasChanged =
+            existing.registration_type_id !== registration.registrationTypeId ||
+            formatDate(existing.date_from) !== registration.dateFrom ||
+            formatDate(existing.date_to) !== (registration.dateTo ?? null) ||
+            Boolean(existing.social_contribution) !== registration.socialContribution ||
+            Boolean(existing.health_contribution) !== registration.healthContribution;
+
+        if (!hasChanged) {
+            continue;
+        }
+
+        // ZAPISUJEMY STARY STAN DO HISTORII
+        await clientZusRegistrationHistoryRepository.create(
+            connection,
+            {
+                id: existing.id,
+                clientId: existing.client_id,
+                registrationTypeId: existing.registration_type_id,
+                dateFrom: formatDate(existing.date_from),
+                dateTo: formatDate(existing.date_to),
+                socialContribution: Boolean(existing.social_contribution),
+                healthContribution: Boolean(existing.health_contribution)
+            },
+            'UPDATE'
+        );
+
+        // AKTUALIZUJEMY
+        await clientZusRegistrationRepository.update(
+            connection,
+            existing.id,
+            registration
+        );
+    }
+
+    // USUNIĘCIE ODHACZONYCH
+    for (const existing of existingRegistrations) {
+
+        if (incomingIds.has(existing.id)) {
+            continue;
+        }
+
+        await clientZusRegistrationHistoryRepository.create(
+            connection,
+            {
+                id: existing.id,
+                clientId: existing.client_id,
+                registrationTypeId: existing.registration_type_id,
+                dateFrom: formatDate(existing.date_from),
+                dateTo: formatDate(existing.date_to),
+                socialContribution: Boolean(existing.social_contribution),
+                healthContribution: Boolean(existing.health_contribution)
+            },
+            'DELETE'
+        );
+
+        await clientZusRegistrationRepository.remove(
+            connection,
+            existing.id
+        );
+    }
+}
+
+export async function getDetails(clientId) {
+    const client = await clientRepository.findById(clientId);
+
+    if(!clientId) {
+        return { 
+            status: 404, 
+            data: { 
+                messaeg: 'Nie znaleziono klienta o podanym ID.' 
+            } 
+        };
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        const details = await clientDetailsRepository.findByClientId(clientId, connection);
+        const comment = await clientCommentsRepository.findLatestByClientId(connection, clientId);
+        const accountingServices = await clientAccountingServiceRepository.findByClientId(connection, clientId);
+        const vatStatuses = await clientVatStatus.findByClientId(connection, clientId);
+        const zusRegistrations = await clientZusRegistrationRepository.findByClientId(connection, clientId);
+
+        const services = {
+            kpir: {
+                enabled: false,
+                programId: null
+            },
+            kh: {
+                enabled: false,
+                programId: null
+            },
+            uepik: {
+                enabled: false,
+                programId: null
+            },
+            kadry: {
+                enabled: false,
+                programId: null
+            }
+        };
+
+        const serviceMap = {
+            28: 'kpir',
+            29: 'kh',
+            30: 'uepik',
+            31: 'kadry'
+        };
+
+        for (const service of accountingServices) {
+            const serviceName = serviceMap[service.serviceId];
+
+            if (!serviceName) continue;
+
+            services[serviceName] = {
+                enabled: true,
+                programId: service.programId ?? null
+            };
+        }
+
+        const vat = {
+            vatPayer: {
+                enabled: false,
+                dateFrom: null,
+                dateTo: null
+            },
+
+            vatUe: {
+                enabled: false,
+                dateFrom: null,
+                dateTo: null
+            },
+
+            vatExemptSubject: {
+                enabled: false,
+                dateFrom: null,
+                dateTo: null
+            },
+
+            vatExemptEntity: {
+                enabled: false,
+                dateFrom: null,
+                dateTo: null
+            },
+
+            vat9m: {
+                enabled: false,
+                dateFrom: null,
+                dateTo: null
+            }
+        };
+
+        const vatStatusMap = {
+            38: 'vatPayer',
+            9: 'vatUe',
+            39: 'vatExemptSubject',
+            40: 'vatExemptEntity',
+            42: 'vat9m'
+        };
+
+        for (const status of vatStatuses) {
+            const statusName = vatStatusMap[status.vatStatusId];
+
+            if (!statusName) continue;
+
+            vat[statusName] = {
+                enabled: true,
+                dateFrom: status.dateFrom,
+                dateTo: status.dateTo
+            };
+        }
+
+        const zus = {
+            relief: {
+                enabled: false,
+                validFrom: '',
+                validTo: '',
+                socialContribution: false,
+                healthContribution: false
+            },
+
+            preferential: {
+                enabled: false,
+                validFrom: '',
+                validTo: '',
+                socialContribution: false,
+                healthContribution: false
+            },
+
+            full: {
+                enabled: false,
+                validFrom: '',
+                validTo: '',
+                socialContribution: false,
+                healthContribution: false
+            },
+
+            smallPlus: {
+                enabled: false,
+                validFrom: '',
+                validTo: '',
+                socialContribution: false,
+                healthContribution: false
+            }
+        };
+
+        const zusRegistrationMap = {
+            82: 'relief',
+            83: 'preferential',
+            84: 'full',
+            85: 'smallPlus'
+        };
+
+        for (const registration of zusRegistrations) {
+            const registrationName =
+                zusRegistrationMap[registration.registrationTypeId];
+
+            if (!registrationName) continue;
+
+            zus[registrationName] = {
+                enabled: true,
+                validFrom: registration.dateFrom ?? '',
+                validTo: registration.dateTo ?? '',
+                socialContribution: Boolean(registration.socialContribution),
+                healthContribution: Boolean(registration.healthContribution)
+            };
+        }
+
+        return { 
+            status: 200, 
+            data: {
+                ...details,
+                notes:{
+                    content: comment?.comment ?? ''
+                },
+                ...services,
+                ...vat,
+                ...zus,
+            } 
+        };
+    } finally {
+        connection.release();
+    }
+}
+
+function formatDate(date) {
+    if (!date) {
+        return null;
+    }
+
+    return date.toISOString().slice(0, 10);
 }
