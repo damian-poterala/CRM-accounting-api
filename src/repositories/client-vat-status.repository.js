@@ -45,3 +45,18 @@ export async function findByClientId(connection, clientId) {
 
     return rows;
 }
+
+export async function findDetailsByClientId(clientId, connection) {
+    const [rows] = await connection.query(`
+        SELECT
+            cvs.id,
+            cvs.vat_status_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = cvs.vat_status_id) AS vat_status,
+            DATE_FORMAT(cvs.date_from, '%Y-%m-%d') AS date_from,
+            DATE_FORMAT(cvs.date_to, '%Y-%m-%d') AS date_to
+        FROM client_vat_statuses AS cvs
+        WHERE client_id = ?
+    `, [clientId]);
+
+    return rows;
+}

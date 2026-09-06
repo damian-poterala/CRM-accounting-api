@@ -40,3 +40,18 @@ export async function findByClientId(connection, clientId) {
 
     return rows;
 }
+
+export async function findDetailsByClientId(clientId, connection) {
+    const [rows] = await connection.query(`
+        SELECT
+            cas.id,
+            cas.accounting_service_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = cas.accounting_service_id) AS accounting_service,
+            cas.accounting_program_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = cas.accounting_program_id) AS accounting_program
+        FROM client_accounting_services AS cas
+        WHERE client_id = ?
+    `, [ clientId ]);
+
+    return rows;
+}

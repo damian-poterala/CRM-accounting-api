@@ -85,11 +85,17 @@ export async function updateDetails(req, res) {
     }
 }
 
-export async function getDetails(req, res, next) {
+export async function getFormData(req, res, next) {
     try {
-        const result = await clientService.getDetails(req.params.id);
+        const result = await clientService.getFormData(req.params.id);
         return res.status(result.status).json(result.data);
     } catch (error) {
         next(error);
     }
+}
+
+export async function getDetails(req, res) {
+    const result = await clientService.getDetails(req.params.id);
+
+    return res.status(result.status).json(result.data);
 }

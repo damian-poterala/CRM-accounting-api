@@ -18,3 +18,15 @@ export async function findLatestByClientId(connection, clientId) {
 
     return rows[0] ?? null;
 }
+
+export async function findLatestDetailsByClientId(clientId, connection) {
+    const [rows] = await connection.query(`
+        SELECT comment 
+        FROM client_comments
+        WHERE client_id = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+    `, [ clientId ]);
+
+    return rows[0] ?? null;
+}

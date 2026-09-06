@@ -108,11 +108,10 @@ async function syncZusRegistrations(connection, clientId, registrations) {
 
         const existing = existingRegistrations.find(
             item =>
-                item.registration_type_id === registration.registrationTypeId
+                item.registrationTypeId === registration.registrationTypeId
         );
 
         if (!existing) {
-            // NOWY WPIS
             const result = await clientZusRegistrationRepository.create(
                 connection,
                 clientId,
@@ -139,11 +138,11 @@ async function syncZusRegistrations(connection, clientId, registrations) {
         incomingIds.add(existing.id);
 
         const hasChanged =
-            existing.registration_type_id !== registration.registrationTypeId ||
-            formatDate(existing.date_from) !== registration.dateFrom ||
-            formatDate(existing.date_to) !== (registration.dateTo ?? null) ||
-            Boolean(existing.social_contribution) !== registration.socialContribution ||
-            Boolean(existing.health_contribution) !== registration.healthContribution;
+            existing.registrationTypeId !== registration.registrationTypeId ||
+            existing.dateFrom !== registration.dateFrom ||
+            existing.dateTo !== (registration.dateTo ?? null) ||
+            Boolean(existing.socialContribution) !== registration.socialContribution ||
+            Boolean(existing.healthContribution) !== registration.healthContribution;
 
         if (!hasChanged) {
             continue;
@@ -155,11 +154,11 @@ async function syncZusRegistrations(connection, clientId, registrations) {
             {
                 id: existing.id,
                 clientId: existing.client_id,
-                registrationTypeId: existing.registration_type_id,
-                dateFrom: formatDate(existing.date_from),
-                dateTo: formatDate(existing.date_to),
-                socialContribution: Boolean(existing.social_contribution),
-                healthContribution: Boolean(existing.health_contribution)
+                registrationTypeId: existing.registrationTypeId,
+                dateFrom: existing.dateFrom,
+                dateTo: existing.dateTo,
+                socialContribution: Boolean(existing.socialContribution),
+                healthContribution: Boolean(existing.healthContribution)
             },
             'UPDATE'
         );
@@ -183,12 +182,12 @@ async function syncZusRegistrations(connection, clientId, registrations) {
             connection,
             {
                 id: existing.id,
-                clientId: existing.client_id,
-                registrationTypeId: existing.registration_type_id,
-                dateFrom: formatDate(existing.date_from),
-                dateTo: formatDate(existing.date_to),
-                socialContribution: Boolean(existing.social_contribution),
-                healthContribution: Boolean(existing.health_contribution)
+                clientId: existing.clientId,
+                registrationTypeId: existing.registrationTypeId,
+                dateFrom: existing.dateFrom,
+                dateTo: existing.dateTo,
+                socialContribution: Boolean(existing.socialContribution),
+                healthContribution: Boolean(existing.healthContribution)
             },
             'DELETE'
         );
@@ -200,7 +199,7 @@ async function syncZusRegistrations(connection, clientId, registrations) {
     }
 }
 
-export async function getDetails(clientId) {
+export async function getFormData(clientId) {
     const client = await clientRepository.findById(clientId);
 
     if(!clientId) {
@@ -378,6 +377,39 @@ export async function getDetails(clientId) {
                 ...zus,
             } 
         };
+    } finally {
+        connection.release();
+    }
+}
+
+export async function getDetails(clientId) {
+    const client = await clientRepository.findById(clientId);
+
+    if(!client) {
+        return { status: 404, data: { message: 'Nie znaleziono klienta o podanym ID.' } };
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        const details  = await clientDetailsRepository.findDetailsByClientId(clientId, connection);
+        const comment  = await clientCommentsRepository.findLatestDetailsByClientId(clientId, connection);
+        const zus      = await clientZusRegistrationRepository.findDetailsByClientId(clientId, connection); 
+        const services = await clientAccountingServiceRepository.findDetailsByClientId(clientId, connection);
+        const vat      = await clientVatStatus.findDetailsByClientId(clientId, connection);
+
+        return {
+            status: 200,
+            data: {
+                ...details,
+                notes: {
+                    content: comment?.comment ?? ''
+                },
+                zus      : [...zus],
+                services : [...services],
+                vat      : [...vat]
+            }
+        }
     } finally {
         connection.release();
     }

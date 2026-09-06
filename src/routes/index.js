@@ -5,6 +5,7 @@ import clientRoutes from './client.routes.js';
 import userRoutes from './user.routes.js';
 import dictionaryRoutes from './dictionary.routes.js';
 import declarationRoutes from './declaration.routes.js';
+import commentRoutes from './comment.routes.js';
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.use('/api/clients', clientRoutes);
 router.use('/api/users', userRoutes);
 router.use('/api/dictionaries', dictionaryRoutes);
 router.use('/api/declarations', declarationRoutes);
+router.use('/api/comment', commentRoutes);
 
 export default router;

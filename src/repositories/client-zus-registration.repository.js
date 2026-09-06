@@ -61,3 +61,19 @@ export async function findByClientId(connection, clientId) {
 
     return rows;
 }
+
+export async function findDetailsByClientId(clientId, connection) {
+    const [rows] = await connection.query(`
+        SELECT 
+            czr.registration_type_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = czr.registration_type_id) AS registration_type,
+            DATE_FORMAT(czr.date_from, '%Y-%m-%d') AS date_from,
+            DATE_FORMAT(czr.date_to, '%Y-%m-%d') AS date_to,
+            CASE WHEN czr.social_contribution = 1 THEN 'Tak' ELSE 'Nie' END AS social_contribution,
+            CASE WHEN czr.health_contribution = 1 THEN 'Tak' ELSE 'Nie' END AS health_contribution
+        FROM client_zus_registrations AS czr
+        WHERE client_id = ?
+    `, [ clientId ]);
+
+    return rows;
+}

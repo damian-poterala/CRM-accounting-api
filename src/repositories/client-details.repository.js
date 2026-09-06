@@ -34,6 +34,35 @@ export async function findByClientId(clientId, connection) {
     };
 }
 
+export async function findDetailsByClientId(clientId, connection) {
+    const [rows] = await connection.query(`
+        SELECT  
+            DATE_FORMAT(cd.contract_signed_at, '%Y-%m-%d') AS contract_signed_at,
+            DATE_FORMAT(cd.service_start_date, '%Y-%m-%d') AS service_start_date,
+            DATE_FORMAT(cd.service_end_date, '%Y-%m-%d') AS service_end_date,
+            cd.contract_number AS contract_number,
+            CASE WHEN cd.electronic_contract = 1 THEN 'Tak' ELSE 'Nie' END AS electronic_contract,
+            cd.lead_source_id AS lead_source_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = cd.lead_source_id) AS lead_source,
+            cd.monthly_fee AS monthly_fee,
+            cd.payment_due_date AS payment_due_date,
+            cd.payment_method_id AS payment_method_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = cd.payment_method_id LIMIT 1) AS payment_method,
+            cd.documents_limit AS documents_limit,
+            cd.vat_period_id AS vat_period_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = cd.vat_period_id LIMIT 1) AS vat_period,
+            cd.income_tax_period_id AS income_tax_period_id,
+            (SELECT display_name FROM dictionaries AS d WHERE d.id = cd.income_tax_period_id LIMIT 1) AS income_tax_period,
+            CASE WHEN cd.zus_not_applicable = 1 THEN 'Tak' ELSE 'Nie' END AS zus_not_applicable,
+            CASE WHEN cd.zus_contributor = 1 THEN 'Tak' ELSE 'Nie' END AS zus_contributor
+        FROM clients_details AS cd
+        WHERE client_id = ?
+        LIMIT 1    
+    `, [ clientId ]);
+
+    return rows[0] ?? null;
+}
+
 export async function create(clientId, data, connection) {
     const [result] = await connection.query(`
         INSERT INTO clients_details (
