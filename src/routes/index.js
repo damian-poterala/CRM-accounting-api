@@ -7,6 +7,7 @@ import dictionaryRoutes from './dictionary.routes.js';
 import declarationRoutes from './declaration.routes.js';
 import commentRoutes from './comment.routes.js';
 import contactRoutes from './contact.routes.js';
+import locationRoutes from './location.routes.js';
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use('/api/dictionaries', dictionaryRoutes);
 router.use('/api/declarations', declarationRoutes);
 router.use('/api/comment', commentRoutes);
 router.use('/api/contact', contactRoutes);
+router.use('/api/location', locationRoutes);
 
 export default router;

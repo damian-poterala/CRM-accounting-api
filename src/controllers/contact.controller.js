@@ -47,6 +47,6 @@ export async function remove(req, res) {
         return res.status(result.status).json({ message: result.message });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: 'Wystąpił błąd podczas usuwania kontaktu' });
+        return res.status(500).json({ message: 'Wystąpił błąd podczas usuwania kontaktu.' });
     }
 }

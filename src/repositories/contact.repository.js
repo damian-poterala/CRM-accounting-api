@@ -19,7 +19,7 @@ export async function getContacts(clientId) {
             cc.first_name,
             cc.last_name,
             cc.position_id,
-            (SELECT d.display_name FROM dictionaries AS d WHERE d.id = cc.position_id) AS position,
+            (SELECT d.display_name FROM dictionaries AS d WHERE d.id = cc.position_id LIMIT 1) AS position,
             cc.email,
             cc.phone,
             cc.notes,

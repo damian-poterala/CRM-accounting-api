@@ -6,10 +6,8 @@ export async function getContacts(id) {
 
 export async function create(id, data) {
     const result = await contactRepository.create(id, data);
-    return {
-        status: 201,
-        message: 'Udało się utworzyć nowy kontakt.'
-    }
+
+    return { status: 201, message: 'Udało się utworzyć nowy kontakt.' }
 }
 
 export async function remove(id) {
@@ -21,8 +19,5 @@ export async function remove(id) {
 
     const result = await contactRepository.remove(id);
 
-    return {
-        status: 201,
-        message: "Udało się usunąć kontakt"
-    };
+    return { status: 201, message: "Udało się usunąć kontakt." };
 }
