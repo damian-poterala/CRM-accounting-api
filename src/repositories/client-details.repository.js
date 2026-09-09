@@ -36,7 +36,29 @@ export async function findByClientId(clientId, connection) {
 
 export async function findDetailsByClientId(clientId, connection) {
     const [rows] = await connection.query(`
-        SELECT  
+        SELECT 
+            c.id,
+            c.company_type AS company_type_key,
+            (SELECT display_name FROM dictionaries AS d WHERE d.value_key = c.company_type LIMIT 1) AS company_type,
+            c.company_name,
+            c.first_name,
+            c.last_name,
+            CONCAT(c.first_name, ' ', c.last_name) AS full_name,
+            c.nip,
+            c.regon,
+            c.krs,
+            c.pesel,
+            c.email,
+            c.phone,
+            c.is_vat_payer,
+            c.cooperation_status AS cooperation_status_key,
+            (SELECT display_name FROM dictionaries AS d WHERE d.value_key = c.cooperation_status LIMIT 1) AS cooperation_status,
+            c.account_manager_id,
+            (SELECT u.username FROM users AS u WHERE u.id = c.account_manager_id LIMIT 1) AS account_manager,
+            c.notes AS comment,
+            DATE_FORMAT(c.created_at, '%Y-%m-%d') AS created_at,
+            DATE_FORMAT(c.updated_at, '%Y-%m-%d') AS updated_at,
+
             DATE_FORMAT(cd.contract_signed_at, '%Y-%m-%d') AS contract_signed_at,
             DATE_FORMAT(cd.service_start_date, '%Y-%m-%d') AS service_start_date,
             DATE_FORMAT(cd.service_end_date, '%Y-%m-%d') AS service_end_date,
@@ -55,9 +77,10 @@ export async function findDetailsByClientId(clientId, connection) {
             (SELECT display_name FROM dictionaries AS d WHERE d.id = cd.income_tax_period_id LIMIT 1) AS income_tax_period,
             CASE WHEN cd.zus_not_applicable = 1 THEN 'Tak' ELSE 'Nie' END AS zus_not_applicable,
             CASE WHEN cd.zus_contributor = 1 THEN 'Tak' ELSE 'Nie' END AS zus_contributor
-        FROM clients_details AS cd
-        WHERE client_id = ?
-        LIMIT 1    
+        FROM clients AS c
+        LEFT JOIN clients_details AS cd ON c.id = cd.client_id
+        WHERE c.id = ?
+        LIMIT 1  
     `, [ clientId ]);
 
     return rows[0] ?? null;

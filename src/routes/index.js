@@ -8,6 +8,7 @@ import declarationRoutes from './declaration.routes.js';
 import commentRoutes from './comment.routes.js';
 import contactRoutes from './contact.routes.js';
 import locationRoutes from './location.routes.js';
+import clientFileRoutes from './client-file.routes.js';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/api/declarations', declarationRoutes);
 router.use('/api/comment', commentRoutes);
 router.use('/api/contact', contactRoutes);
 router.use('/api/location', locationRoutes);
+router.use('/api/file', clientFileRoutes);
 
 export default router;
