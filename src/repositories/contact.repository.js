@@ -51,6 +51,21 @@ export async function create(clientId, data) {
     return result;
 }
 
+export async function update(contactId, data) {
+    const [result] = await pool.query(`
+        UPDATE client_contacts 
+        SET first_name = ?,
+            last_name = ?,
+            position_id = ?,
+            email = ?,
+            phone = ?
+        WHERE id = ?
+        LIMIT 1
+    `, [ data.firstName, data.lastName, data.positionId, data.email, data.phone, contactId ]);
+    
+    return result
+}
+
 export async function remove(id) {
     const [result] = await pool.query(`
         UPDATE client_contacts

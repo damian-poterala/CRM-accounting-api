@@ -10,6 +10,18 @@ export async function create(id, data) {
     return { status: 201, message: 'Udało się utworzyć nowy kontakt.' }
 }
 
+export async function update(id, data) {
+    const contact = await contactRepository.findById(id);
+
+    if(!contact) {
+        return { status: 404, data: { message: 'Nie udało się znaleźć kontaktu o wybranym id.' } };
+    }
+
+    const result = await contactRepository.update(id, data);
+
+    return { status: 201, message: 'Udało się zaktualizować dane kontaktowe.' };
+}
+
 export async function remove(id) {
     const contact = await contactRepository.findById(id);
 

@@ -31,7 +31,21 @@ export async function create(req, res) {
 }
 
 export async function update(req, res) {
+    try {
+        const locationId = Number(req.params.id);
+        const data = req.body;
 
+        if(!locationId) {
+            return res.status(400).json({ message: 'Nieprawidłowe ID lokalizacji.' });
+        }
+
+        const result = await locationService.update(locationId, data);
+
+        return res.status(result.status).json({ message: result.message });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Wystąpił błąd podczas edycji danych lokalizacji.' });
+    }
 }
 
 export async function remove(req, res) {

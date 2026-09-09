@@ -53,6 +53,21 @@ export async function create(clientId, data) {
     return result;
 }
 
+export async function update(locationId, data) {
+    const [result] = await pool.query(`
+        UPDATE client_addresses
+        SET address_type_id = ?,
+            street = ?,
+            building_number = ?,
+            apartment_number = ?,
+            postal_code = ?,
+            city = ?,
+            country = ?
+        WHERE id = ?
+        LIMIT 1
+    `, [ data.addressTypeId, data.street, data.buildingNumber, data.apartmentNumber, data.postalCode, data.city, data.country, locationId ]); 
+}
+
 export async function remove(id) {
     const [result] = await pool.query(`
         UPDATE client_addresses

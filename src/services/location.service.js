@@ -11,7 +11,15 @@ export async function create(id, data) {
 }
 
 export async function update(id, data) {
+    const location = await locationRepository.findById(id);
 
+    if(!location) {
+        return { status: 404, data: { message: 'Nie udało się znaleźć lokalizacji o wybranym id.' } };
+    }
+
+    const result = await locationRepository.update(id, data);
+
+    return { status: 201, message: 'Udało się zaktualizować dane lokalizacji.' };
 }
 
 export async function remove(id) {
