@@ -46,7 +46,9 @@ export async function update(id, data) {
 }
 
 export async function create(data) {
-    return await clientRepository.create(data);
+    const result = await clientRepository.create(data);
+
+    return { status: 201, data: { message: 'Klient został utworzony.' } };
 }
 
 export async function updateDetails(clientId, data) {
