@@ -10,6 +10,7 @@ import contactRoutes from './contact.routes.js';
 import locationRoutes from './location.routes.js';
 import clientFileRoutes from './client-file.routes.js';
 import statisticRoutes from './statistic.routes.js';
+import taskRoutes from './task.routes.js';
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use('/api/contact', contactRoutes);
 router.use('/api/location', locationRoutes);
 router.use('/api/file', clientFileRoutes);
 router.use('/api/statistic', statisticRoutes);
+router.use('/api/task', taskRoutes);
 
 export default router;
