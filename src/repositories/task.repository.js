@@ -1,5 +1,13 @@
 import pool from '../config/db.js';
 
+export async function findById(id) {
+    const [rows] = await pool.query(`
+        SELECT id FROM tasks WHERE id = ? LIMIT 1
+    `, [ id ]);
+
+    return rows[0] || null;
+}
+
 export async function getAllTask() {
     const [rows] = await pool.query(`
         SELECT 
@@ -64,6 +72,28 @@ export async function create(data) {
         data.isComplete,
         data.priorityId
     ]);
+
+    return result;
+}
+
+export async function remove(id) {
+    const [result] = await pool.query(`
+        UPDATE tasks
+        SET is_active = 0
+        WHERE id = ?
+        LIMIT 1
+    `, [ id ]);
+
+    return result;
+}
+
+export async function complete(id) {
+    const [result] = await pool.query(`
+        UPDATE tasks 
+        SET is_complete = 1
+        WHERE id = ?
+        LIMIT 1
+    `, [ id ]);
 
     return result;
 }

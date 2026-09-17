@@ -8,6 +8,8 @@ const router = Router();
 router.get('/', taskController.getAllTask);
 router.get('/:id', taskController.getTaskPerUser);
 
+router.put('/:id/remove', taskController.remove);
+router.put('/:id/complete', taskController.complete);
 
 router.post('/create', taskController.create);
 

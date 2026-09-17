@@ -13,3 +13,25 @@ export async function create(data) {
 
     return { status: 201, message: 'Udało się utworzyć nowe zadanie.' }
 }
+
+export async function remove(id) {
+    const task = await taskRepository.findById(id);
+
+    if(!task) {
+        return { status: 404, data: { message: 'Nie udało się znaleźć zadania o wybranym ID.' } };
+    }
+
+    const result = await taskRepository.remove(id);
+    return { status: 201, message: 'Udało się usunąć zadanie.' };
+}
+
+export async function complete(id) {
+    const task = await taskRepository.findById(id);
+
+    if(!task) {
+        return { status: 404, data: { message: 'Nie udało się znaleźć zadania o wybranym ID.' } };
+    }
+
+    const result = await taskRepository.complete(id);
+    return { status: 201, message: 'Udało się zamknąć zadanie.' };
+}
