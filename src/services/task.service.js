@@ -8,6 +8,10 @@ export async function getTaskPerUser(userId) {
     return await taskRepository.getTaskPerUser(userId);
 }
 
+export async function getTaskPerClient(userId, clientId) {
+    return await taskRepository.getTaskPerClient(userId, clientId);
+}
+
 export async function create(data) {
     const result = await taskRepository.create(data);
 

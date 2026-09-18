@@ -8,8 +8,8 @@ import * as clientZusRegistrationRepository from '../repositories/client-zus-reg
 import * as clientZusRegistrationHistoryRepository from '../repositories/client-zus-registration-history.repository.js';
 import * as clientVatStatus from '../repositories/client-vat-status.repository.js';
 
-export async function getClients() {
-    return await clientRepository.getClients();
+export async function getClients(id) {
+    return await clientRepository.getClients(id);
 }
 
 export async function autocomplete(field, query) {
@@ -26,8 +26,8 @@ export async function autocomplete(field, query) {
     return await clientRepository.autocomplete(allowedFields[field], query);
 }
 
-export async function search(filters) {
-    return await clientRepository.search(filters);
+export async function search(filters, id) {
+    return await clientRepository.search(filters, id);
 }
 
 export async function update(id, data) {

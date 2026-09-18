@@ -2,7 +2,8 @@ import * as clientService from '../services/client.service.js';
 
 export async function getClients(req, res) {
     try {
-        const clients = await clientService.getClients();
+        const id = req.user.id;
+        const clients = await clientService.getClients(id);
         
         return res.status(200).json(clients);
     } catch (error) {
@@ -28,7 +29,8 @@ export async function autocomplete(req, res) {
 
 export async function search(req, res) {
     try {
-        const result = await clientService.search(req.body);
+        const userId = req.user.id;
+        const result = await clientService.search(req.body, userId);
 
         return res.status(200).json(result);
     } catch (error) {

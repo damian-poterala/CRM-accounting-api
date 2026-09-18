@@ -6,12 +6,12 @@ import * as clientController from '../controllers/client.controller.js';
 
 const router = Router();
 
-router.get('/'             , clientController.getClients);
+router.get('/'             , authenticate, clientController.getClients);
 router.get('/autocomplete' , clientController.autocomplete);
 router.get('/:id/form-data', clientController.getFormData);
 router.get('/:id/details'  , clientController.getDetails);
 
-router.post('/search', clientController.search);
+router.post('/search', authenticate, clientController.search);
 router.post('', clientController.create);
 
 router.put('/:id', clientController.update);

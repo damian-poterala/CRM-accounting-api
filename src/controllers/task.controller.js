@@ -26,6 +26,22 @@ export async function getTaskPerUser(req, res) {
     }
 }
 
+export async function getTaskPerClient(req, res) {
+    try {
+        const userId = Number(req.user.id);
+        const clientId = Number(req.params.clientId);
+
+        console.log(userId);
+        console.log(clientId);
+
+        const tasks = await taskService.getTaskPerClient(userId, clientId);
+        return res.status(200).json(tasks);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Wystąpił błąd podczas pobierania listy zadań przypisanych do klienta.' });
+    }
+}
+
 export async function create(req, res) {
     try {
         const data = req.body;

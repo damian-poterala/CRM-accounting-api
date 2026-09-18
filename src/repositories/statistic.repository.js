@@ -115,3 +115,17 @@ export async function getClientsByCooperationStatus(connection) {
 
     return rows;
 }
+
+export async function getClientsByCompanyType(connection) {
+    const [rows] = await connection.query(`
+        SELECT 
+            COUNT(c.id) AS amount,
+            d.display_name AS company_type
+        FROM clients AS c
+        LEFT JOIN dictionaries AS d ON d.value_key = c.company_type
+        WHERE d.dictionary_type = 'company_type'
+        GROUP BY d.display_name
+    `);
+
+    return rows;
+}
