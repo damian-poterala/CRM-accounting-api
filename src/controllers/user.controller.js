@@ -11,3 +11,16 @@ export async function getUsers(req, res) {
         return res.status(500).json({ message: 'Wystąpił błąd podczas pobierania użytkowników' });
     }
 }
+
+export async function getDashboard(req, res) {
+    try {
+        const userId = Number(req.user.id);
+
+        const result = await userService.getDashboard(userId);
+
+        return res.status(result.status).json(result.data);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Wystąpił błąd podczas pobierania informacji o Twoim profilu.' });
+    }
+}
