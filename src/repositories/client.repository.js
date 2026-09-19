@@ -1,7 +1,6 @@
 import pool from '../config/db.js';
 
 export async function getClients(id) {
-
     const [rows] = await pool.query(`
         SELECT  c.id,
                 c.company_type AS company_type_key,
@@ -28,6 +27,39 @@ export async function getClients(id) {
         FROM clients AS c
         ORDER BY id DESC
     `, [ id ]);
+
+    return rows;
+}
+
+export async function getClientsPerUser(id) {
+
+    const [rows] = await pool.query(`
+        SELECT  c.id,
+                c.company_type AS company_type_key,
+                (SELECT display_name FROM dictionaries AS d WHERE d.value_key = c.company_type LIMIT 1) AS company_type,
+                c.company_name,
+                c.first_name,
+                c.last_name,
+                c.nip,
+                c.regon,
+                c.krs,
+                c.pesel,
+                c.email,
+                c.phone,
+                c.is_vat_payer,
+                c.cooperation_status AS cooperation_status_key,
+                (SELECT display_name FROM dictionaries AS d WHERE d.value_key = c.cooperation_status LIMIT 1) AS cooperation_status,
+                c.account_manager_id,
+                (SELECT username FROM users AS u WHERE u.id = c.account_manager_id LIMIT 1) AS account_manager,
+                c.notes,
+                c.created_at,
+                c.updated_at,
+                (SELECT COUNT(*) FROM clients_details AS cd WHERE cd.client_id = c.id) AS details,
+                (SELECT COUNT(*) FROM tasks AS t WHERE t.client_id = c.id AND t.user_id = ? AND t.is_active = 1 AND t.is_complete = 0 LIMIT 1) AS tasks
+        FROM clients AS c
+        WHERE c.account_manager_id = ?
+        ORDER BY id DESC
+    `, [ id, id ]);
 
     return rows;
 }

@@ -12,6 +12,10 @@ export async function getClients(id) {
     return await clientRepository.getClients(id);
 }
 
+export async function getClientsPerUser(id) {
+    return await clientRepository.getClientsPerUser(id);
+}
+
 export async function autocomplete(field, query) {
     const allowedFields = {
         nip: 'nip',

@@ -7,6 +7,7 @@ import * as clientController from '../controllers/client.controller.js';
 const router = Router();
 
 router.get('/'             , authenticate, clientController.getClients);
+router.get('/user', authenticate, clientController.getClientsPerUser);
 router.get('/autocomplete' , clientController.autocomplete);
 router.get('/:id/form-data', clientController.getFormData);
 router.get('/:id/details'  , clientController.getDetails);

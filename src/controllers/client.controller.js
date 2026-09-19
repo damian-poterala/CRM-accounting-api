@@ -13,6 +13,20 @@ export async function getClients(req, res) {
     }
 }
 
+export async function getClientsPerUser(req, res) {
+    try {
+        const id = req.user.id;
+        const clients = await clientService.getClientsPerUser(id);
+        
+        return res.status(200).json(clients);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({ message: 'Wystąpił błąd podczas pobierania klientów.' });
+    }
+}
+
+
 export async function autocomplete(req, res) {
     try {
         const { field, query } = req.query;
