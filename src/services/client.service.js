@@ -421,6 +421,166 @@ export async function getDetails(clientId) {
     }
 }
 
+function isValidDigits(value, length) {
+    return new RegExp(`^\\d{${length}}$`).test(value);
+}
+
+function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidPhone(value) {
+    return /^[0-9+()\-\s]+$/.test(value);
+}
+
+export async function importClient(data) {
+    if(!data || typeof data !== 'object') {
+        return { status: 400, data: { message: 'Nieprawidłowe dane klienta.' } };
+    }
+
+    const companyType = typeof data.companyType == 'string' ? data.companyType.trim() : '';
+    const companyName = typeof data.companyName == 'string' ? data.companyName.trim() : '';
+    const firstName = typeof data.firstName == 'string' ? data.firstName.trim() : '';
+    const lastName = typeof data.lastName == 'string' ? data.lastName.trim() : '';
+    const nip = typeof data.nip == 'string' ? data.nip.trim() : '';
+    const regon = typeof data.regon == 'string' ? data.regon.trim() : '';
+    const krs = typeof data.krs == 'string' ? data.krs.trim() : '';
+    const pesel = typeof data.pesel == 'string' ? data.pesel.trim() : '';
+    const email = typeof data.email == 'string' ? data.email.trim() : '';
+    const phone = typeof data.phone == 'string' ? data.phone.trim() : '';
+    const cooperationStatus = typeof data.cooperationStatus == 'string' ? data.cooperationStatus.trim() : '';
+    const notes = typeof data.notes == 'string' ? data.notes.trim() : '';
+
+    const accountManager = Number(data.accountManager);
+
+    if(!companyType) {
+        return { status: 400, data: { message: 'Typ klienta jest wymagany.' } };
+    }
+
+    if(!companyName.length > 255) {
+        return { status: 400, data: { message: 'Nazwa firmy może mieć maksymalnie 255 znaków.' } };
+    }
+
+    if(firstName.length > 100) {
+        return { status: 400, data: { message: 'Imię może mieć maksymalnie 100 znaków.' } };
+    }
+
+    if(lastName.length > 100) {
+        return { status: 400, data: { message: 'Nazwisko może mieć maksymalnie 100 znaków.' } };
+    }
+
+    if(!nip) {
+        return { status: 400, data: { message: 'NIP jest wymagany.' } };
+    }
+
+    if(!isValidDigits(nip, 10)) {
+        return { status: 400, data: { message: 'NIP musi zawierać dokładnie 10 cyfr.' } };
+    }
+
+    if(regon && !isValidDigits(regon, 9)) {
+        return { status: 400, data: { message: 'REGON musi zawierać dokładnie 9 cyfr.' } };
+    }
+
+    if(krs && !isValidDigits(krs, 10)) {
+        return { status: 400, data: { message: 'KRS musi zawierać dokładnie 10 cyfr.' } };
+    }
+
+    if(pesel && !isValidDigits(pesel, 11)) {
+        return { status: 400, data: { message: 'PESEL msui zawierać dokładnie 11 cyfr.' } };
+    }
+
+    if(email) {
+        if(email.length > 255) {
+            return { status: 400, data: { message: 'E-mail może mieć maksymalnie 255 znaków.' } };
+        }
+
+        if(!isValidEmail(email)) {
+            return { status: 400, data: { message: 'Nieprawidłowy adres e-mail.' } };
+        }
+    }
+
+    if(phone) {
+        if(phone.length > 20) {
+            return { status: 400, data: { message: 'Telefon może mieć maksymalnie 20 znaków.' } };
+        }
+
+        if(!isValidPhone(phone)) {
+            return { status: 400, data: { message: 'Nieprawidłowy numer telefonu.' } };
+        }
+    }
+
+    if(typeof data.isVatPayer !== 'boolean') {
+        return { status: 400, data: { message: 'Pole Płatnik VAT musi mieć wartość Tak lub Nie' } };
+    }
+
+    if(!cooperationStatus) {
+        return { status: 400, data: { message: 'Status współpracy jest wymagany.' } };
+    }
+
+    if(!Number.isInteger(accountManager) || accountManager <= 0) {
+        return { status: 400, data: { message: 'Opiekun klienta jest wymagany.' } };
+    }
+
+    const companyTypeExists = await clientRepository.dictionaryValueExists('company_type', companyType);
+
+    if(!companyTypeExists) {
+        return { status: 400, data: { message: 'Wybrany typ klienta jest nieprawidłowy.' } };
+    }
+
+    const cooperationStatusExists = await clientRepository.dictionaryValueExists('cooperation_status', cooperationStatus);
+
+    if(!cooperationStatusExists) {
+        return { status: 400, data: { message: 'Wybrany status współpracy jest nieprawidłowy.' } };
+    }
+
+    const accountManagerExists = await clientRepository.userExists(accountManager);
+
+    if(!accountManagerExists) {
+        return { status: 400, data: { message: 'Wybrany opiekun klienta nie istnieje.' } };
+    }
+
+    const existingNip = await clientRepository.findByNip(nip);
+
+    if(existingNip) {
+        return { status: 409, data: { message: 'Klient o podanym numerze NIP już istnieje.' } };
+    }
+
+    if(regon) {
+        const existingRegon = await clientRepository.findByRegon(regon);
+
+        if(existingRegon) {
+            return { status: 409, data: { message: 'Klient o podanym numerze REGON już istnieje.' } };
+        }
+    }
+
+    if(krs) {
+        const existingKrs = await clientRepository.findByKrs(krs);
+
+        if(existingKrs) {
+            return { status: 409, data: { message: 'Klient o podanym numerze KRS już istnieje.' } };
+        }
+    }
+
+    const result = await clientRepository.importClient({
+        companyType,
+        companyName,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        nip,
+        regon: regon || null,
+        krs: krs || null,
+        pesel: pesel || null,
+        email: email || null,
+        phone: phone || null,
+        isVatPayer: data.isVatPayer,
+        cooperationStatus,
+        accountManager,
+        notes: notes || null,
+    });
+
+    return { status: 201, data: { success: true, client_id: result.insertId } };
+}
+
 function formatDate(date) {
     if (!date) {
         return null;

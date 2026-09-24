@@ -191,3 +191,100 @@ export async function create(data) {
 
     return result;
 }
+
+export async function findByNip(nip) {
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM clients
+        WHERE nip = ?
+        LIMIT 1    
+    `, [ nip ]);
+
+    return rows[0] || null;
+}
+
+export async function findByRegon(regon) {
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM clients
+        WHERE regon = ?
+        LIMIT 1
+    `, [ regon ]);
+
+    return rows[0] || null;
+}
+
+export async function findByKrs(krs) {
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM clients
+        WHERE krs = ?
+        LIMIT 1
+    `, [ krs ]);
+
+    return rows[0] || null;
+}
+
+export async function dictionaryValueExists(dictionaryType, valueKey) {
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM dictionaries
+        WHERE dictionary_type = ?
+            AND value_key = ?
+            AND is_active = 1
+        LIMIT 1
+    `, [ dictionaryType, valueKey ]);
+    
+    return rows.length > 0;
+}
+
+export async function userExists(userId) {
+    const [rows] = await pool.query(`
+        SELECT id
+        FROM users
+        WHERE id = ?
+        LIMIT 1
+    `, [ userId ]);
+
+    return rows.length > 0;
+}
+
+export async function importClient(data) {
+    const [result] = await pool.query(`
+        INSERT INTO clients (
+            company_type,
+            company_name,
+            first_name,
+            last_name,
+            nip,
+            regon,
+            krs,
+            pesel,
+            email,
+            phone,
+            is_vat_payer,
+            cooperation_status,
+            account_manager_id,
+            notes
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    `, [
+        data.companyType,
+        data.companyName,
+        data.firstName || null,
+        data.lastName || null,
+        data.nip,
+        data.regon || null,
+        data.krs || null,
+        data.pesel || null,
+        data.email || null,
+        data.phone || null,
+        data.isVatPayer,
+        data.cooperationStatus,
+        data.accountManager,
+        data.notes || null,
+    ]);
+
+    return result;
+}

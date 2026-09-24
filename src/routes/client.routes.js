@@ -14,6 +14,8 @@ router.get('/:id/details'  , clientController.getDetails);
 
 router.post('/search', authenticate, clientController.search);
 router.post('', clientController.create);
+// router.post('/import', authenticate, clientController.importClient);
+router.post('/import', clientController.importClient);
 
 router.put('/:id', clientController.update);
 router.put('/:id/details', clientController.updateDetails);
